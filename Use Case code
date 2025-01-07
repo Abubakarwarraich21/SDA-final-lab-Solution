@@ -1,0 +1,233 @@
+import java.util.ArrayList;
+import java.util.List;
+
+class Database {
+    private static List<User> users = new ArrayList<>();
+    private static List<Product> products = new ArrayList<>();
+    
+    public static void addUser(User user) {
+        users.add(user);
+    }
+    
+    public static List<User> getUsers() {
+        return users;
+    }
+
+    public static void addProduct(Product product) {
+        products.add(product);
+    }
+
+    public static List<Product> getProducts() {
+        return products;
+    }
+}
+
+class UserPersistence {
+    public User getUserById(int userId) {
+        for (User user : Database.getUsers()) {
+            if (user.getUserId() == userId) {
+                return user;
+            }
+        }
+        return null; 
+    }
+}
+
+class ProductPersistence {
+    public Product getProductById(int productId) {
+        for (Product product : Database.getProducts()) {
+            if (product.getProductId() == productId) {
+                return product;
+            }
+        }
+        return null; 
+    }
+}
+
+class CartPersistence {
+    public ShoppingCart getCart(User user) {
+        return new ShoppingCart();
+    }
+}
+
+class ShoppingCartService {
+    public void addItemToCart(ShoppingCart cart, Product product, int quantity) {
+        CartItem item = new CartItem(product.getProductId(), quantity, product.getPrice());
+        cart.addItem(item);
+    }
+
+    public double applyDiscount(ShoppingCart cart, double discountRate) {
+        return cart.calculateDiscountedPrice(discountRate);
+    }
+}
+
+class PurchaseService {
+    public void purchaseItems(User user, ShoppingCart cart) {
+        // Process the purchase (e.g., payment handling, order creation)
+        System.out.println("Processing purchase for User: " + user.getUserName());
+        System.out.println("Total Amount: $" + cart.getTotalPrice());
+        System.out.println("Discounted Price: $" + cart.getDiscountedPrice());
+        System.out.println("Purchase Successful!");
+    }
+}
+
+class UserInterface {
+    private UserPersistence userPersistence;
+    private ProductPersistence productPersistence;
+    private CartPersistence cartPersistence;
+    private ShoppingCartService shoppingCartService;
+    private PurchaseService purchaseService;
+
+    public UserInterface() {
+        this.userPersistence = new UserPersistence();
+        this.productPersistence = new ProductPersistence();
+        this.cartPersistence = new CartPersistence();
+        this.shoppingCartService = new ShoppingCartService();
+        this.purchaseService = new PurchaseService();
+    }
+
+    public void run() {
+        User user = userPersistence.getUserById(1); // Fetch user from persistence
+        if (user == null) {
+            System.out.println("User not found!");
+            return;
+        }
+        
+        ShoppingCart cart = cartPersistence.getCart(user); // Get cart for the user
+
+        Product laptop = productPersistence.getProductById(101); // Fetch products from persistence
+        Product phone = productPersistence.getProductById(102);
+
+        if (laptop != null && phone != null) {
+            shoppingCartService.addItemToCart(cart, laptop, 1);
+            shoppingCartService.addItemToCart(cart, phone, 2);
+            
+            double discountedPrice = shoppingCartService.applyDiscount(cart, 0.10); // 10% discount
+
+            purchaseService.purchaseItems(user, cart); // Process purchase
+        } else {
+            System.out.println("Product(s) not found!");
+        }
+    }
+}
+
+class User {
+    private int userId;
+    private String userName;
+    private String userEmail;
+
+    public User(int userId, String userName, String userEmail) {
+        this.userId = userId;
+        this.userName = userName;
+        this.userEmail = userEmail;
+    }
+
+    public int getUserId() {
+        return userId;
+    }
+
+    public String getUserName() {
+        return userName;
+    }
+
+    public String getUserEmail() {
+        return userEmail;
+    }
+}
+
+class Product {
+    private int productId;
+    private String productName;
+    private double price;
+
+    public Product(int productId, String productName, double price) {
+        this.productId = productId;
+        this.productName = productName;
+        this.price = price;
+    }
+
+    public int getProductId() {
+        return productId;
+    }
+
+    public String getProductName() {
+        return productName;
+    }
+
+    public double getPrice() {
+        return price;
+    }
+}
+
+class CartItem {
+    private int itemId;
+    private int quantity;
+    private double price;
+
+    public CartItem(int itemId, int quantity, double price) {
+        this.itemId = itemId;
+        this.quantity = quantity;
+        this.price = price;
+    }
+
+    public int getItemId() {
+        return itemId;
+    }
+
+    public int getQuantity() {
+        return quantity;
+    }
+
+    public double getPrice() {
+        return price;
+    }
+
+    public double getTotalPrice() {
+        return quantity * price;
+    }
+}
+
+class ShoppingCart {
+    private List<CartItem> cartItems;
+    private double totalPrice;
+    private double discountedPrice;
+
+    public ShoppingCart() {
+        cartItems = new ArrayList<>();
+        totalPrice = 0.0;
+        discountedPrice = 0.0;
+    }
+
+    public void addItem(CartItem item) {
+        cartItems.add(item);
+        totalPrice += item.getTotalPrice();
+    }
+
+    public double calculateDiscountedPrice(double discountRate) {
+        discountedPrice = totalPrice * (1 - discountRate);
+        return discountedPrice;
+    }
+
+    public List<CartItem> getCartItems() {
+        return cartItems;
+    }
+
+    public double getTotalPrice() {
+        return totalPrice;
+    }
+
+    public double getDiscountedPrice() {
+        return discountedPrice;
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        Database.addUser(new User(1, "John Doe", "john@example.com"));
+        Database.addProduct(new Product(101, "Laptop", 750.00));
+        Database.addProduct(new Product(102, "Phone", 300.00));
+
+        UserInterface ui = new UserInterface();
+        ui.run();
+    }
+}
